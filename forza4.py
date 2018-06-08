@@ -1,6 +1,8 @@
 import numpy as np
 import pandas as pd
 import time
+import copy
+import os
 
 np.random.seed(2)  # reproducible
 
@@ -117,7 +119,7 @@ def checkUpDiagonals(state):
 def checkDownDiagonals(state):
     for row in range( N_ROWS ):
         for col in range(N_COLUMNS - 4 + 1 ):
-            down_diagonal = getDown4Diagonal4( state, row, col )
+            down_diagonal = getDown4Diagonal( state, row, col )
             counter = [0,0,0]
             for coin in down_diagonal:
                 counter[coin] += 1
@@ -177,25 +179,28 @@ def createStateKey(state):
                 counter = 0
     return key
 
-def get_env_feedback( state, action, coin ):
+def get_env_feedback( S, A, C ):
     """
-    action action = column index, 0..6
-    coin coin = RED/YELLOW
+    A A = column index, 0..6
+    C C = RED/YELLOW
     """
     # This is how agent will interact with the environment
     
     reward = 0
-    assert not columnIsFull( state, action )
-    throwCoin( state, action, coin )
-    state_ = state
-    status = checkState(state)
-    if status == RED_WINS or status == YELLOW_WINS:
-        win = status == coin
-        if win:
-            reward = +1
-        else:   #lose
-            reward = -1
-    return state_, reward
+    S_ = copy.deepcopy(S)
+    print ("S_", S_)
+    if columnIsFull( S_, A ):
+        reward = -1
+    else:
+        throwCoin( S_, A, C )
+        status = checkState(S_)
+        if status == RED_WINS or status == YELLOW_WINS:
+            win = status == C
+            if win:
+                reward = +1
+            else:   #lose
+                reward = -1
+    return S_, reward
     
 
 
@@ -220,6 +225,9 @@ d[k2] = [0,1,0,2,0,3,0]
 
 print(d)
 
-
-
-
+state_, reward = get_env_feedback( s, 1, YELLOW_COIN )
+for i in range(100000):
+    coin = i%2
+    throwCoin( s, 1, coin )
+    print( i,"\n", s )
+    
